@@ -1,16 +1,21 @@
 /* Global Styles */
 :root {
     --primary: #FF6B6B;
+    --primary-dark: #FF8585;
     --secondary: #4ECDC4;
+    --secondary-dark: #65E0D8;
     --background: #F7F9FC;
-    --background-dark: #1A202C;
+    --background-dark: #121212;
+    --card-bg-dark: #1E1E1E;
     --text: #2D3436;
-    --text-dark: #E2E8F0;
+    --text-dark: #FFFFFF;
     --accent: #95A5A6;
+    --accent-dark: #B0BEC5;
+    --border-dark: #333333;
     --spacing: 24px;
     --border-radius: 12px;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-dark: 0 4px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-dark: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 body {
@@ -23,6 +28,25 @@ body {
     --background: var(--background-dark);
     --text: var(--text-dark);
     --shadow: var(--shadow-dark);
+    --primary: var(--primary-dark);
+    --secondary: var(--secondary-dark);
+    --accent: var(--accent-dark);
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-dark);
+}
+
+[data-bs-theme="dark"] .form-control {
+    background-color: #2D2D2D;
+    border-color: #444444;
+    color: var(--text-dark);
+}
+
+[data-bs-theme="dark"] .form-control:focus {
+    background-color: #2D2D2D;
+    color: var(--text-dark);
 }
 
 /* Theme Toggle Button */

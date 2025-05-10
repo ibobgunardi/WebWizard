@@ -95,16 +95,39 @@ def generate_website(website_type, content, style, language, api_token):
         response.raise_for_status()
         
         result = response.json()
+        
+        # Check if we have choices in the response
+        if 'choices' not in result or not result['choices'] or 'message' not in result['choices'][0]:
+            error_msg = "API response did not contain expected data structure"
+            logging.error(f"OpenRouter API error: {error_msg}")
+            logging.error(f"Response: {result}")
+            raise Exception(error_msg)
+            
         html_content = result["choices"][0]["message"]["content"]
         
         # Clean up the response if needed (remove any markdown code block markers)
         html_content = html_content.replace("```html", "").replace("```", "").strip()
         
         return html_content
+    except requests.RequestException as req_err:
+        # Handle request-related errors
+        error_text = ""
+        if hasattr(req_err, 'response') and req_err.response:
+            try:
+                error_text = req_err.response.text
+            except:
+                error_text = "No response text available"
+        
+        logging.error(f"OpenRouter API request error: {str(req_err)}")
+        logging.error(f"Response: {error_text}")
+        
+        if "rate limit" in error_text.lower():
+            raise Exception("Rate limit exceeded. Please try again in a few minutes.")
+        else:
+            raise Exception(f"API request failed: {str(req_err)}")
     except Exception as e:
+        # Handle all other errors
         logging.error(f"OpenRouter API error: {str(e)}")
-        if hasattr(e, 'response') and e.response:
-            logging.error(f"Response: {e.response.text}")
         raise Exception(f"Failed to generate website: {str(e)}")
 
 def deploy_to_vercel(html_content, vercel_token):
@@ -159,10 +182,28 @@ def deploy_to_vercel(html_content, vercel_token):
             raise Exception("Deployment URL not found in response")
         
         return f"https://{deployment_url}"
+    except requests.RequestException as req_err:
+        # Handle request-related errors
+        error_text = ""
+        if hasattr(req_err, 'response') and req_err.response:
+            try:
+                error_text = req_err.response.text
+                error_json = req_err.response.json()
+                if 'error' in error_json and 'message' in error_json['error']:
+                    error_text = error_json['error']['message']
+            except:
+                error_text = req_err.response.text if req_err.response.text else "No response text available"
+        
+        logging.error(f"Vercel API request error: {str(req_err)}")
+        logging.error(f"Response: {error_text}")
+        
+        if "unauthorized" in error_text.lower() or "authentication" in error_text.lower():
+            raise Exception("Invalid Vercel API token. Please check your token and try again.")
+        else:
+            raise Exception(f"Deployment request failed: {error_text}")
     except Exception as e:
+        # Handle all other errors
         logging.error(f"Vercel deployment error: {str(e)}")
-        if hasattr(e, 'response') and e.response:
-            logging.error(f"Response: {e.response.text}")
         raise Exception(f"Failed to deploy website: {str(e)}")
 
 # Add missing import

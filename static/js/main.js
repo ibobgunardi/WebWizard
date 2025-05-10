@@ -94,17 +94,75 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(2);
     });
     
-    // Content Input - Auto Language Detection
+    // Content Input - Auto Language Detection with Validation
     contentInput.addEventListener('input', function() {
-        if (this.value.length > 20) {
+        const contentLength = this.value.length;
+        const minLength = this.getAttribute('data-min-length') || 20;
+        const maxLength = this.getAttribute('data-max-length') || 4000;
+        
+        // Update the character count and limit display
+        const charCountDisplay = document.getElementById('content-char-count');
+        if (charCountDisplay) {
+            charCountDisplay.textContent = contentLength;
+            
+            // Add warning classes based on length
+            if (contentLength > maxLength * 0.9) {
+                charCountDisplay.classList.add('text-danger');
+                charCountDisplay.classList.remove('text-warning', 'text-success');
+            } else if (contentLength > maxLength * 0.7) {
+                charCountDisplay.classList.add('text-warning');
+                charCountDisplay.classList.remove('text-danger', 'text-success');
+            } else if (contentLength >= minLength) {
+                charCountDisplay.classList.add('text-success');
+                charCountDisplay.classList.remove('text-danger', 'text-warning');
+            } else {
+                charCountDisplay.classList.remove('text-success', 'text-danger', 'text-warning');
+            }
+        }
+        
+        if (contentLength >= minLength && contentLength <= maxLength) {
             // We're using the server-side detection in utils.py, this is just for immediate UI feedback
             const hasIndonesianWords = /\b(dan|atau|dengan|ini|itu|yang|di|ke|dari|pada|adalah|untuk|dalam|tidak|bukan)\b/i.test(this.value);
             const language = hasIndonesianWords ? 'Indonesian (ID)' : 'English (EN)';
             languageDetection.innerHTML = `<i class="fas fa-globe me-1"></i> Auto-detected language: <strong>${language}</strong>`;
             step2Next.disabled = false;
+            
+            // Remove any validation messages
+            if (document.getElementById('content-validation-message')) {
+                document.getElementById('content-validation-message').remove();
+            }
         } else {
-            languageDetection.innerHTML = '';
+            // Update language detection display
+            if (contentLength >= minLength) {
+                const hasIndonesianWords = /\b(dan|atau|dengan|ini|itu|yang|di|ke|dari|pada|adalah|untuk|dalam|tidak|bukan)\b/i.test(this.value);
+                const language = hasIndonesianWords ? 'Indonesian (ID)' : 'English (EN)';
+                languageDetection.innerHTML = `<i class="fas fa-globe me-1"></i> Auto-detected language: <strong>${language}</strong>`;
+            } else {
+                languageDetection.innerHTML = '';
+            }
+            
+            // Disable the next button
             step2Next.disabled = true;
+            
+            // Show validation message
+            let validationMessage = '';
+            if (contentLength < minLength) {
+                validationMessage = `Content is too short. Please enter at least ${minLength} characters.`;
+            } else if (contentLength > maxLength) {
+                validationMessage = `Content is too long. Maximum allowed is ${maxLength} characters.`;
+            }
+            
+            // Add or update validation message
+            let validationElement = document.getElementById('content-validation-message');
+            if (!validationElement && validationMessage) {
+                validationElement = document.createElement('div');
+                validationElement.id = 'content-validation-message';
+                validationElement.className = 'alert alert-warning mt-2';
+                validationElement.innerHTML = validationMessage;
+                this.parentNode.appendChild(validationElement);
+            } else if (validationElement && validationMessage) {
+                validationElement.innerHTML = validationMessage;
+            }
         }
     });
     
@@ -165,12 +223,67 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(3);
     });
     
+    // API Token validation and toggle visibility
+    const toggleTokenBtn = document.getElementById('toggle-token-btn');
+    
+    // Toggle password visibility
+    toggleTokenBtn.addEventListener('click', function() {
+        const tokenIcon = this.querySelector('i');
+        if (apiToken.type === 'password') {
+            apiToken.type = 'text';
+            tokenIcon.classList.remove('fa-eye');
+            tokenIcon.classList.add('fa-eye-slash');
+        } else {
+            apiToken.type = 'password';
+            tokenIcon.classList.remove('fa-eye-slash');
+            tokenIcon.classList.add('fa-eye');
+        }
+    });
+    
+    apiToken.addEventListener('input', function() {
+        validateApiToken(this.value.trim());
+    });
+    
+    function validateApiToken(token) {
+        const tokenRegex = /^[a-zA-Z0-9_\-]{10,}/;
+        const isValid = tokenRegex.test(token);
+        
+        // Show validation feedback
+        if (token) {
+            if (isValid) {
+                apiToken.classList.add('is-valid');
+                apiToken.classList.remove('is-invalid');
+                generateBtn.disabled = false;
+            } else {
+                apiToken.classList.add('is-invalid');
+                apiToken.classList.remove('is-valid');
+                generateBtn.disabled = true;
+            }
+        } else {
+            apiToken.classList.remove('is-valid', 'is-invalid');
+            generateBtn.disabled = true;
+        }
+    }
+    
     generateBtn.addEventListener('click', function() {
         if (!apiToken.value.trim()) {
             Swal.fire({
                 title: 'API Token Required',
                 text: 'Please enter your OpenRouter API token to generate the website',
                 icon: 'warning',
+                confirmButtonColor: '#FF6B6B'
+            });
+            return;
+        }
+        
+        // Extra validation
+        const token = apiToken.value.trim();
+        const tokenRegex = /^[a-zA-Z0-9_\-]{10,}/;
+        if (!tokenRegex.test(token)) {
+            Swal.fire({
+                title: 'Invalid API Token',
+                text: 'The API token you entered doesn\'t appear to be valid. Please check and try again.',
+                icon: 'error',
                 confirmButtonColor: '#FF6B6B'
             });
             return;
