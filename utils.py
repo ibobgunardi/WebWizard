@@ -69,7 +69,8 @@ def generate_website(website_type, content, style, language, api_token):
     6. Make the design professional, modern, and visually appealing
     7. Include links to the developer's profile indicating they are "open to work"
     8. Add donation buttons for Trakteer and BuyMeACoffee at the bottom
-    9. The page should be complete and ready to deploy without any external dependencies
+    9. Use dark theme styling that matches the selected style
+    10. The page should be complete and ready to deploy without any external dependencies
     
     Return only the HTML code without any explanation or markdown.
     """

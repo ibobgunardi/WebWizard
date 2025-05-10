@@ -3,18 +3,41 @@
     --primary: #FF6B6B;
     --secondary: #4ECDC4;
     --background: #F7F9FC;
+    --background-dark: #1A202C;
     --text: #2D3436;
+    --text-dark: #E2E8F0;
     --accent: #95A5A6;
     --spacing: 24px;
     --border-radius: 12px;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-dark: 0 4px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 body {
     font-family: 'Inter', sans-serif;
-    color: var(--text);
-    background-color: var(--background);
     line-height: 1.6;
+}
+
+/* Dark Mode Adjustments */
+[data-bs-theme="dark"] {
+    --background: var(--background-dark);
+    --text: var(--text-dark);
+    --shadow: var(--shadow-dark);
+}
+
+/* Theme Toggle Button */
+.theme-toggle button {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.theme-toggle button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -201,18 +224,20 @@ textarea.form-control {
 
 /* Style Templates */
 .style-templates {
-    max-height: 500px;
+    max-height: 400px;
     overflow-y: auto;
+    margin-top: 10px;
 }
 
 .style-template {
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
+    margin-bottom: 15px;
 }
 
 .style-template img {
-    height: 140px;
+    height: 120px;
     object-fit: cover;
     transition: all 0.3s ease;
 }
@@ -223,10 +248,22 @@ textarea.form-control {
 
 .style-template.selected {
     border: 2px solid var(--primary);
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3);
 }
 
 .style-template .card-body {
-    padding: 12px;
+    padding: 10px;
+}
+
+/* Style Description */
+#style-description {
+    resize: none;
+    transition: all 0.3s ease;
+}
+
+#style-description:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.25);
 }
 
 /* Preview Container */
