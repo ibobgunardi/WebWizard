@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Preview</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        header {
+            background-color: #F7F9FC;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            color: #FF6B6B;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 8px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #FF6B6B;
+            color: white;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #95A5A6;
+            color: #2D3436;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .preview-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-wand-magic-sparkles"></i> AI Website Generator
+        </div>
+        <div class="actions">
+            <a href="/" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <button class="btn btn-primary" id="download-btn">
+                <i class="fas fa-download"></i> Download HTML
+            </button>
+        </div>
+    </header>
+    
+    <!-- Hidden div to store HTML content -->
+    <div id="html-content" style="display: none;">{{ html_content|safe }}</div>
+    
+    <!-- Preview iframe -->
+    <iframe id="preview-frame" class="preview-frame"></iframe>
+    
+    <script src="{{ url_for('static', filename='js/preview.js') }}"></script>
+</body>
+</html>
