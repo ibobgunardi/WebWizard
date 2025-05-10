@@ -1,4 +1,29 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Theme toggle functionality
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeIcon = themeToggleBtn.querySelector('i');
+    const htmlElement = document.documentElement;
+    
+    // Initialize theme based on data-bs-theme attribute (default is dark)
+    updateThemeIcon();
+    
+    themeToggleBtn.addEventListener('click', function() {
+        if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+            htmlElement.setAttribute('data-bs-theme', 'light');
+        } else {
+            htmlElement.setAttribute('data-bs-theme', 'dark');
+        }
+        updateThemeIcon();
+    });
+    
+    function updateThemeIcon() {
+        if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+            themeIcon.className = 'fas fa-sun'; // Show sun in dark mode
+        } else {
+            themeIcon.className = 'fas fa-moon'; // Show moon in light mode
+        }
+    }
+    
     // Elements
     const websiteTypes = document.querySelectorAll('.website-type');
     const websiteTypeInput = document.getElementById('website-type-input');
@@ -11,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const styleTemplates = document.querySelectorAll('.style-template');
     const styleTemplateInput = document.getElementById('style-template-input');
-    const randomStyleBtn = document.getElementById('random-style-btn');
+    const styleDescription = document.getElementById('style-description');
+    const styleCharCount = document.getElementById('style-char-count');
     const step3Next = document.getElementById('step-3-next');
     const step3Prev = document.getElementById('step-3-prev');
     
@@ -68,13 +94,13 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(2);
     });
     
-    // Content Input
+    // Content Input - Auto Language Detection
     contentInput.addEventListener('input', function() {
-        // Simple language detection simulation
         if (this.value.length > 20) {
-            const hasIndonesianWords = /\b(dan|atau|dengan|ini|itu|yang|di|ke|dari|pada)\b/i.test(this.value);
-            const language = hasIndonesianWords ? 'Indonesian' : 'English';
-            languageDetection.innerHTML = `<i class="fas fa-globe me-1"></i> Detected language: <strong>${language}</strong>`;
+            // We're using the server-side detection in utils.py, this is just for immediate UI feedback
+            const hasIndonesianWords = /\b(dan|atau|dengan|ini|itu|yang|di|ke|dari|pada|adalah|untuk|dalam|tidak|bukan)\b/i.test(this.value);
+            const language = hasIndonesianWords ? 'Indonesian (ID)' : 'English (EN)';
+            languageDetection.innerHTML = `<i class="fas fa-globe me-1"></i> Auto-detected language: <strong>${language}</strong>`;
             step2Next.disabled = false;
         } else {
             languageDetection.innerHTML = '';
@@ -90,27 +116,40 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(1);
     });
     
-    // Style Template Selection
-    styleTemplates.forEach(template => {
-        template.addEventListener('click', function() {
-            styleTemplates.forEach(t => t.classList.remove('selected'));
-            this.classList.add('selected');
-            styleTemplateInput.value = this.dataset.style;
-            step3Next.disabled = false;
-        });
+    // Style Description Character Counter
+    styleDescription.addEventListener('input', function() {
+        const currentLength = this.value.length;
+        styleCharCount.textContent = currentLength;
     });
     
-    randomStyleBtn.addEventListener('click', function() {
-        const templates = Array.from(styleTemplates);
-        const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
-        
-        styleTemplates.forEach(t => t.classList.remove('selected'));
-        randomTemplate.classList.add('selected');
-        styleTemplateInput.value = randomTemplate.dataset.style;
-        step3Next.disabled = false;
-        
-        // Scroll to the selected template
-        randomTemplate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Style Template Selection with Auto-Fill Style Description
+    const styleDescriptions = {
+        'modern-minimal': 'Clean, minimalist design with ample whitespace and focused content presentation.',
+        'bold-creative': 'Vibrant colors, dynamic layouts, and creative elements for a strong visual impact.',
+        'elegant-professional': 'Sophisticated and refined design with premium feel for professional presence.',
+        'tech-startup': 'Modern, cutting-edge design with tech-focused elements and innovative layout.',
+        'artistic-portfolio': 'Creative, gallery-style layout showcasing visual work with artistic flair.',
+        'corporate-clean': 'Professional, structured design with clear hierarchy ideal for business use.'
+    };
+    
+    styleTemplates.forEach(template => {
+        template.addEventListener('click', function() {
+            // Update selected template visually
+            styleTemplates.forEach(t => t.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Get the style name
+            const styleName = this.dataset.style;
+            styleTemplateInput.value = styleName;
+            
+            // Auto-fill the style description
+            if (styleDescriptions[styleName]) {
+                styleDescription.value = styleDescriptions[styleName];
+                styleCharCount.textContent = styleDescription.value.length;
+            }
+            
+            step3Next.disabled = false;
+        });
     });
     
     step3Next.addEventListener('click', function() {
@@ -128,7 +167,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     generateBtn.addEventListener('click', function() {
         if (!apiToken.value.trim()) {
-            alert('Please enter your OpenRouter API token');
+            Swal.fire({
+                title: 'API Token Required',
+                text: 'Please enter your OpenRouter API token to generate the website',
+                icon: 'warning',
+                confirmButtonColor: '#FF6B6B'
+            });
             return;
         }
         
@@ -141,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('website_type', websiteTypeInput.value);
         formData.append('content', contentInput.value);
-        formData.append('style', styleTemplateInput.value);
+        formData.append('style', styleTemplateInput.value + (styleDescription.value ? ': ' + styleDescription.value : ''));
         formData.append('api_token', apiToken.value);
         
         // Send request to generate website
@@ -160,6 +204,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Move to results step
                 goToStep(5);
                 
+                // Show preview with loading animation
+                Swal.fire({
+                    title: 'Website Generated!',
+                    text: 'Your website has been created successfully',
+                    icon: 'success',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+                
                 // Show preview
                 setTimeout(() => {
                     previewPlaceholder.classList.add('d-none');
@@ -173,7 +227,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     iframeDoc.close();
                 }, 1000);
             } else {
-                alert('Error: ' + data.message);
+                Swal.fire({
+                    title: 'Generation Failed',
+                    text: 'Error: ' + data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#FF6B6B'
+                });
             }
         })
         .catch(error => {
@@ -181,7 +240,13 @@ document.addEventListener('DOMContentLoaded', function() {
             generateBtn.disabled = false;
             generateBtnText.classList.remove('d-none');
             generateLoading.classList.add('d-none');
-            alert('An error occurred. Please try again.');
+            
+            Swal.fire({
+                title: 'Something Went Wrong',
+                text: 'An error occurred while generating your website. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#FF6B6B'
+            });
         });
     });
     
@@ -207,7 +272,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Deploy to Vercel
     deployBtn.addEventListener('click', function() {
         if (!vercelToken.value.trim()) {
-            alert('Please enter your Vercel API token');
+            Swal.fire({
+                title: 'Vercel Token Required',
+                text: 'Please enter your Vercel API token to deploy the website',
+                icon: 'warning',
+                confirmButtonColor: '#FF6B6B'
+            });
             return;
         }
         
@@ -233,10 +303,26 @@ document.addEventListener('DOMContentLoaded', function() {
             deployLoading.classList.add('d-none');
             
             if (data.success) {
-                alert('Website deployed successfully! URL: ' + data.url);
-                window.open(data.url, '_blank');
+                Swal.fire({
+                    title: 'Successfully Deployed!',
+                    html: `Your website is now live at:<br><a href="${data.url}" target="_blank">${data.url}</a>`,
+                    icon: 'success',
+                    confirmButtonText: 'Open Website',
+                    confirmButtonColor: '#FF6B6B',
+                    showCancelButton: true,
+                    cancelButtonText: 'Close'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.open(data.url, '_blank');
+                    }
+                });
             } else {
-                alert('Error: ' + data.message);
+                Swal.fire({
+                    title: 'Deployment Failed',
+                    text: 'Error: ' + data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#FF6B6B'
+                });
             }
         })
         .catch(error => {
@@ -244,7 +330,13 @@ document.addEventListener('DOMContentLoaded', function() {
             deployBtn.disabled = false;
             deployBtnText.classList.remove('d-none');
             deployLoading.classList.add('d-none');
-            alert('An error occurred during deployment. Please try again.');
+            
+            Swal.fire({
+                title: 'Deployment Error',
+                text: 'An error occurred during deployment. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#FF6B6B'
+            });
         });
     });
 });
