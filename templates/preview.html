@@ -104,8 +104,8 @@
     <!-- Hidden div to store HTML content -->
     <div id="html-content" style="display: none;">{{ html_content|safe }}</div>
     
-    <!-- Preview iframe -->
-    <iframe id="preview-frame" class="preview-frame"></iframe>
+    <!-- Preview iframe with sandbox to isolate content -->
+    <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
     
     <script src="{{ url_for('static', filename='js/preview.js') }}"></script>
 </body>

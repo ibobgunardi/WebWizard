@@ -332,12 +332,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewPlaceholder.classList.add('d-none');
                     previewIframe.classList.remove('d-none');
                     
-                    // Set iframe content
+                    // Set iframe content using srcdoc to properly isolate the content
                     const iframe = document.getElementById('preview-iframe');
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                    iframeDoc.open();
-                    iframeDoc.write(data.html);
-                    iframeDoc.close();
+                    
+                    // Create a blob URL from the HTML content to ensure proper isolation
+                    const blob = new Blob([data.html], { type: 'text/html' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // Set the src attribute to the blob URL instead of using document.write
+                    iframe.src = blobUrl;
+                    
+                    // Clean up the blob URL when the iframe loads
+                    iframe.onload = function() {
+                        URL.revokeObjectURL(blobUrl);
+                    };
                 }, 1000);
             } else {
                 Swal.fire({
