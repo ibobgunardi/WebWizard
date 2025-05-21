@@ -87,12 +87,38 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('selected');
             websiteTypeInput.value = this.dataset.type;
             step1Next.disabled = false;
+            
+            // Show/hide profile image section based on website type
+            const profileImageSection = document.getElementById('profile-image-section');
+            if (this.dataset.type.toLowerCase() === 'cv') {
+                profileImageSection.classList.remove('d-none');
+            } else {
+                profileImageSection.classList.add('d-none');
+            }
         });
     });
     
     step1Next.addEventListener('click', function() {
         goToStep(2);
     });
+    
+    // Profile Image Preview
+    const profileImageInput = document.getElementById('profile-image-input');
+    const profileImagePreview = document.getElementById('profile-image-preview');
+    
+    if (profileImageInput) {
+        profileImageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    profileImagePreview.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
     
     // Content Input - Auto Language Detection with Validation
     contentInput.addEventListener('input', function() {
@@ -223,6 +249,20 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(3);
     });
     
+    // Terms checkbox validation
+    const termsCheckbox = document.getElementById('terms-checkbox');
+    
+    termsCheckbox.addEventListener('change', function() {
+        validateGenerateButton();
+    });
+    
+    function validateGenerateButton() {
+        const tokenValid = apiToken.classList.contains('is-valid');
+        const termsAccepted = termsCheckbox.checked;
+        
+        generateBtn.disabled = !(tokenValid && termsAccepted);
+    }
+    
     // API Token validation and toggle visibility
     const toggleTokenBtn = document.getElementById('toggle-token-btn');
     
@@ -253,16 +293,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isValid) {
                 apiToken.classList.add('is-valid');
                 apiToken.classList.remove('is-invalid');
-                generateBtn.disabled = false;
             } else {
                 apiToken.classList.add('is-invalid');
                 apiToken.classList.remove('is-valid');
-                generateBtn.disabled = true;
             }
         } else {
             apiToken.classList.remove('is-valid', 'is-invalid');
-            generateBtn.disabled = true;
         }
+        
+        // Update generate button state
+        validateGenerateButton();
     }
     
     generateBtn.addEventListener('click', function() {
@@ -300,6 +340,12 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('content', contentInput.value);
         formData.append('style', styleTemplateInput.value + (styleDescription.value ? ': ' + styleDescription.value : ''));
         formData.append('api_token', apiToken.value);
+        formData.append('terms_accepted', termsCheckbox.checked);
+        
+        // Add profile image if it's a CV and an image was uploaded
+        if (websiteTypeInput.value.toLowerCase() === 'cv' && profileImageInput && profileImageInput.files.length > 0) {
+            formData.append('profile_image', profileImageInput.files[0]);
+        }
         
         // Send request to generate website
         fetch('/generate', {

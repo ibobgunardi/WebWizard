@@ -1,5 +1,6 @@
 import os
 import logging
+import base64
 from flask import Flask, render_template, request, jsonify, session
 from utils import generate_website, detect_language, deploy_to_vercel
 
@@ -24,12 +25,31 @@ def generate():
         content = request.form.get('content')
         style = request.form.get('style')
         api_token = request.form.get('api_token')
+        terms_accepted = request.form.get('terms_accepted', 'false')
+        
+        # Check if terms were accepted
+        if terms_accepted.lower() != 'true':
+            return jsonify({
+                'success': False,
+                'message': 'You must accept the terms and conditions to generate a website.'
+            }), 400
+        
+        # Process profile image if provided (for CV websites)
+        profile_image = None
+        if 'profile_image' in request.files and website_type.lower() == 'cv':
+            image_file = request.files['profile_image']
+            if image_file and image_file.filename:
+                # Read and encode the image to base64
+                image_data = image_file.read()
+                encoded_image = base64.b64encode(image_data).decode('utf-8')
+                mime_type = image_file.content_type or 'image/jpeg'
+                profile_image = f"data:{mime_type};base64,{encoded_image}"
         
         # Detect language
         language = detect_language(content)
         
         # Generate website HTML using AI
-        html_content = generate_website(website_type, content, style, language, api_token)
+        html_content = generate_website(website_type, content, style, language, api_token, profile_image)
         
         # Store the generated HTML in the session for preview
         session['generated_html'] = html_content
@@ -90,4 +110,13 @@ def deploy():
         }), 500
 
 if __name__ == '__main__':
+    # Set CORS headers to allow iframe embedding
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('X-Frame-Options', 'ALLOWALL')
+        return response
+        
     app.run(host='0.0.0.0', port=12000, debug=True)

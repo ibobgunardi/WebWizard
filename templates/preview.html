@@ -98,6 +98,9 @@
             <button class="btn btn-primary" id="download-btn">
                 <i class="fas fa-download"></i> Download HTML
             </button>
+            <button class="btn btn-success" id="download-pdf-btn">
+                <i class="fas fa-file-pdf"></i> Download PDF
+            </button>
         </div>
     </header>
     
@@ -107,6 +110,8 @@
     <!-- Preview iframe with sandbox to isolate content -->
     <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
     
+    <!-- Include html2pdf.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/preview.js') }}"></script>
 </body>
 </html>

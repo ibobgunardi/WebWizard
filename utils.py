@@ -23,7 +23,7 @@ def detect_language(text):
         # Default to English if detection fails
         return 'en'
 
-def generate_website(website_type, content, style, language, api_token):
+def generate_website(website_type, content, style, language, api_token, profile_image=None):
     """
     Generate website HTML using OpenRouter API.
     
@@ -33,6 +33,7 @@ def generate_website(website_type, content, style, language, api_token):
         style (str): Selected style template
         language (str): Detected language ('id' or 'en')
         api_token (str): OpenRouter API token
+        profile_image (str, optional): Base64 encoded profile image for CV
         
     Returns:
         str: Generated HTML content
@@ -46,6 +47,14 @@ def generate_website(website_type, content, style, language, api_token):
     else:
         language_note = "The content is in English. Generate an English website."
     
+    # Add profile image to prompt if provided (for CV websites)
+    profile_image_instruction = ""
+    if website_type.lower() == "cv" and profile_image:
+        profile_image_instruction = f"""
+    Include the following base64 encoded image as the profile photo in the CV:
+    {profile_image}
+    """
+    
     prompt = f"""
     Create a complete, standalone HTML page for a {website_type} website with the following content:
     
@@ -54,6 +63,7 @@ def generate_website(website_type, content, style, language, api_token):
     Style preferences: {style}
     
     {language_note}
+    {profile_image_instruction}
     
     Important requirements:
     1. Create a fully working standalone single-page HTML file that includes all CSS styles internally
@@ -71,6 +81,7 @@ def generate_website(website_type, content, style, language, api_token):
     8. Add donation buttons for Trakteer and BuyMeACoffee at the bottom
     9. Use dark theme styling that matches the selected style
     10. The page should be complete and ready to deploy without any external dependencies
+    11. If this is a CV website and a profile image was provided, display it prominently
     
     Return only the HTML code without any explanation or markdown.
     """
@@ -82,7 +93,7 @@ def generate_website(website_type, content, style, language, api_token):
     }
     
     data = {
-        "model": "anthropic/claude-3-opus:beta",  # Using Claude 3 Opus for high-quality HTML generation
+        "model": "nousresearch/deephermes-3-mistral-24b-preview:free",  # Using free model as requested
         "messages": [
             {"role": "user", "content": prompt}
         ],

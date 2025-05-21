@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         URL.revokeObjectURL(blobUrl);
     };
     
-    // Download button functionality
+    // HTML Download button functionality
     document.getElementById('download-btn').addEventListener('click', function() {
         // Create a blob with the HTML content
         const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -35,5 +35,45 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }, 0);
+    });
+    
+    // PDF Download button functionality
+    document.getElementById('download-pdf-btn').addEventListener('click', function() {
+        // Show loading indicator
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+        this.disabled = true;
+        
+        // Get the iframe document
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        
+        // Configure html2pdf options
+        const options = {
+            margin: 10,
+            filename: 'generated-website.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        // Use html2pdf to generate PDF
+        html2pdf()
+            .from(iframeDoc.documentElement)
+            .set(options)
+            .save()
+            .then(() => {
+                // Reset button state
+                const btn = document.getElementById('download-pdf-btn');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            })
+            .catch(error => {
+                console.error('PDF generation error:', error);
+                // Reset button state and show error
+                const btn = document.getElementById('download-pdf-btn');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('Failed to generate PDF. Please try again.');
+            });
     });
 });
