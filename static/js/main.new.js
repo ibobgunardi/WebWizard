@@ -1,51 +1,38 @@
 /**
- * WebWizard - Main JavaScript
- * 
- * This file initializes all modules and sets up event listeners
- * for the WebWizard application.
+ * Main JavaScript file for WebWizard
+ * This file imports and initializes all modules
  */
 
 // Import modules
-import { goToStep, initNavigation } from './modules/navigation.js';
-import { initSelection } from './modules/selection.js';
-import { validateApiToken, validateGenerateButton } from './modules/validation.js';
-import { initGeneration } from './modules/generation.js';
-import { initDeployment } from './modules/deployment.js';
-import { initLanguageDetection } from './modules/language.js';
 import { initThemeToggle } from './modules/theme.js';
+import { initNavigation, goToStep } from './modules/navigation.js';
+import { initSelection } from './modules/selection.js';
+import { initFormValidation } from './modules/form-validation.js';
+import { initWebsiteGeneration } from './modules/website-generation.js';
+import { initDeployment } from './modules/deployment.js';
 
-// Initialize the application when the DOM is loaded
+// Initialize all modules when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize theme toggle
     initThemeToggle();
     
-    // Initialize all modules
-    initNavigation();
+    // Initialize navigation
+    const navigation = initNavigation();
+    
+    // Initialize selection
     initSelection();
-    initGeneration();
+    
+    // Initialize form validation
+    const validation = initFormValidation();
+    
+    // Initialize website generation
+    initWebsiteGeneration();
+    
+    // Initialize deployment
     initDeployment();
-    initLanguageDetection();
-    
-    // Set up API token validation
-    const apiToken = document.getElementById('api-token');
-    if (apiToken) {
-        apiToken.addEventListener('input', function() {
-            validateApiToken(this.value.trim());
-            validateGenerateButton();
-        });
-    }
-    
-    // Set up terms checkbox validation
-    const termsCheckbox = document.getElementById('terms-checkbox');
-    if (termsCheckbox) {
-        termsCheckbox.addEventListener('change', validateGenerateButton);
-    }
     
     // Initialize PDF download functionality
     initPdfDownload();
-    
-    // Start at step 1
-    goToStep(1);
     
     // Initialize PDF download functionality
     function initPdfDownload() {
@@ -53,8 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (downloadPdfBtn) {
             downloadPdfBtn.addEventListener('click', function() {
-                // This is handled in preview.js, but we're adding a fallback here
-                // in case the button is present on the main page
                 const previewIframe = document.getElementById('preview-iframe');
                 
                 if (previewIframe && previewIframe.contentWindow) {
@@ -87,6 +72,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 confirmButtonColor: '#FF6B6B'
                             });
                         });
+                } else {
+                    Swal.fire({
+                        title: 'PDF Generation Failed',
+                        text: 'No preview content found. Please generate a website first.',
+                        icon: 'error',
+                        confirmButtonColor: '#FF6B6B'
+                    });
                 }
             });
         }
