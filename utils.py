@@ -82,7 +82,7 @@ def generate_website(website_type, content, style, language, api_token):
     }
     
     data = {
-        "model": "anthropic/claude-3-opus:beta",  # Using Claude 3 Opus for high-quality HTML generation
+        "model": "nousresearch/deephermes-3-mistral-24b-preview:free",  # Using a free model from OpenRouters
         "messages": [
             {"role": "user", "content": prompt}
         ],

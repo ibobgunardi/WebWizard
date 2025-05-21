@@ -324,10 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Return early as we'll send the request in the callback or directly
         return;
-    });
-    
-    // Function to send the generate request
-    function sendGenerateRequest(formData) {
+        
         // Send request to generate website
         fetch('/generate', {
             method: 'POST',

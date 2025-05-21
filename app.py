@@ -24,12 +24,33 @@ def generate():
         content = request.form.get('content')
         style = request.form.get('style')
         api_token = request.form.get('api_token')
+        photo_data = request.form.get('photo_data')
         
         # Detect language
         language = detect_language(content)
         
+        # Add photo data to content if provided
+        if photo_data:
+            # Extract just the base64 part from the data URL
+            if 'base64,' in photo_data:
+                photo_data = photo_data.split('base64,')[1]
+            
+            # Add a note about the photo to the content
+            content += "\n\nPlease include the attached profile photo in the generated website. The photo is provided as a base64 encoded image."
+        
         # Generate website HTML using AI
         html_content = generate_website(website_type, content, style, language, api_token)
+        
+        # If photo data was provided, ensure it's included in the HTML
+        if photo_data:
+            # Check if the AI included the base64 image
+            if 'base64' not in html_content:
+                # If not, add it ourselves in a reasonable location
+                # Find the closing body tag
+                if '</body>' in html_content:
+                    # Add a script to insert the image
+                    img_tag = f'<img src="data:image/jpeg;base64,{photo_data}" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">'
+                    html_content = html_content.replace('</body>', f'{img_tag}</body>')
         
         # Store the generated HTML in the session for preview
         session['generated_html'] = html_content
@@ -54,6 +75,23 @@ def preview():
         return render_template('index.html', error="No website has been generated yet")
     
     return render_template('preview.html', html_content=html_content)
+
+@app.route('/download-pdf')
+def download_pdf():
+    """Generate a PDF from the HTML content."""
+    html_content = session.get('generated_html', '')
+    if not html_content:
+        return jsonify({
+            'success': False,
+            'message': 'No website has been generated yet'
+        }), 400
+    
+    # We'll use the html2pdf.js library on the client side for PDF generation
+    # This route is just a placeholder for future server-side PDF generation if needed
+    return jsonify({
+        'success': True,
+        'html': html_content
+    })
 
 @app.route('/deploy', methods=['POST'])
 def deploy():
