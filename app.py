@@ -25,11 +25,12 @@ def generate():
         style = request.form.get('style')
         api_token = request.form.get('api_token')
         photo_data = request.form.get('photo_data')
+        color_palette = request.form.get('color_palette')
         
         # Detect language
         language = detect_language(content)
         
-        # Add photo data to content if provided
+        # Process photo data if provided
         if photo_data:
             # Extract just the base64 part from the data URL
             if 'base64,' in photo_data:
@@ -39,18 +40,67 @@ def generate():
             content += "\n\nPlease include the attached profile photo in the generated website. The photo is provided as a base64 encoded image."
         
         # Generate website HTML using AI
-        html_content = generate_website(website_type, content, style, language, api_token)
+        html_content = generate_website(
+            website_type=website_type, 
+            content=content, 
+            style=style, 
+            language=language, 
+            api_token=api_token,
+            color_palette=color_palette,
+            photo_data=photo_data
+        )
         
         # If photo data was provided, ensure it's included in the HTML
         if photo_data:
             # Check if the AI included the base64 image
             if 'base64' not in html_content:
                 # If not, add it ourselves in a reasonable location
-                # Find the closing body tag
-                if '</body>' in html_content:
-                    # Add a script to insert the image
-                    img_tag = f'<img src="data:image/jpeg;base64,{photo_data}" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">'
+                # Try to find a suitable container for the photo
+                photo_containers = [
+                    '<div class="profile"', 
+                    '<div class="about"', 
+                    '<div class="header"', 
+                    '<header', 
+                    '<section', 
+                    '<div class="container"'
+                ]
+                
+                insertion_point = None
+                for container in photo_containers:
+                    if container in html_content:
+                        # Find the end of the opening tag
+                        start_idx = html_content.find(container)
+                        end_idx = html_content.find('>', start_idx) + 1
+                        if end_idx > 0:
+                            insertion_point = end_idx
+                            break
+                
+                # Create the image tag with appropriate styling
+                img_tag = f'<img src="data:image/jpeg;base64,{photo_data}" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">'
+                
+                if insertion_point:
+                    # Insert after the container opening tag
+                    html_content = html_content[:insertion_point] + img_tag + html_content[insertion_point:]
+                elif '</body>' in html_content:
+                    # Fallback: insert before closing body tag
                     html_content = html_content.replace('</body>', f'{img_tag}</body>')
+                    
+                # Add CSS for the profile photo
+                if '</style>' in html_content:
+                    photo_css = """
+    .profile-photo {
+        max-width: 300px;
+        border-radius: 8px;
+        margin: 20px auto;
+        display: block;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .profile-photo:hover {
+        transform: scale(1.02);
+    }
+"""
+                    html_content = html_content.replace('</style>', f'{photo_css}</style>')
         
         # Store the generated HTML in the session for preview
         session['generated_html'] = html_content

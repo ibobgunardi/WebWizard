@@ -23,7 +23,7 @@ def detect_language(text):
         # Default to English if detection fails
         return 'en'
 
-def generate_website(website_type, content, style, language, api_token):
+def generate_website(website_type, content, style, language, api_token, color_palette=None, photo_data=None):
     """
     Generate website HTML using OpenRouter API.
     
@@ -33,6 +33,8 @@ def generate_website(website_type, content, style, language, api_token):
         style (str): Selected style template
         language (str): Detected language ('id' or 'en')
         api_token (str): OpenRouter API token
+        color_palette (dict, optional): Color palette to use for the website
+        photo_data (str, optional): Base64 encoded photo data
         
     Returns:
         str: Generated HTML content
@@ -46,6 +48,44 @@ def generate_website(website_type, content, style, language, api_token):
     else:
         language_note = "The content is in English. Generate an English website."
     
+    # Parse color palette if provided as JSON string
+    colors = None
+    if color_palette:
+        if isinstance(color_palette, str):
+            try:
+                colors = json.loads(color_palette)
+            except json.JSONDecodeError:
+                logging.warning("Failed to parse color palette JSON")
+        else:
+            colors = color_palette
+    
+    # Use provided color palette or default
+    color_scheme = """
+    3. Incorporate the following color scheme: 
+       - Primary: #FF6B6B (soft coral)
+       - Secondary: #4ECDC4 (calming teal)
+       - Background: #F7F9FC (airy white) 
+       - Text: #2D3436 (soft black)
+       - Accent: #95A5A6 (gentle grey)
+    """
+    
+    if colors:
+        color_scheme = f"""
+    3. Incorporate the following color scheme: 
+       - Primary: {colors.get('primary', '#FF6B6B')}
+       - Secondary: {colors.get('secondary', '#4ECDC4')}
+       - Background: {colors.get('background', '#F7F9FC')}
+       - Text: {colors.get('text', '#2D3436')}
+       - Accent: {colors.get('accent', '#95A5A6')}
+    """
+    
+    # Add photo instructions if provided
+    photo_instructions = ""
+    if photo_data:
+        photo_instructions = """
+    11. Include the provided profile photo in an appropriate location (the base64 encoded image data will be provided separately)
+        """
+    
     prompt = f"""
     Create a complete, standalone HTML page for a {website_type} website with the following content:
     
@@ -57,20 +97,14 @@ def generate_website(website_type, content, style, language, api_token):
     
     Important requirements:
     1. Create a fully working standalone single-page HTML file that includes all CSS styles internally
-    2. Use modern HTML5 and CSS3 features with responsive design
-    3. Incorporate the following color scheme: 
-       - Primary: #FF6B6B (soft coral)
-       - Secondary: #4ECDC4 (calming teal)
-       - Background: #F7F9FC (airy white) 
-       - Text: #2D3436 (soft black)
-       - Accent: #95A5A6 (gentle grey)
+    2. Use modern HTML5 and CSS3 features with responsive design{color_scheme}
     4. Use Quicksand for headings and Inter for body text (with Google Fonts)
     5. Include soft shadows, 12px rounded corners, and 24px consistent spacing
     6. Make the design professional, modern, and visually appealing
     7. Include links to the developer's profile indicating they are "open to work"
     8. Add donation buttons for Trakteer and BuyMeACoffee at the bottom
     9. Use dark theme styling that matches the selected style
-    10. The page should be complete and ready to deploy without any external dependencies
+    10. The page should be complete and ready to deploy without any external dependencies{photo_instructions}
     
     Return only the HTML code without any explanation or markdown.
     """

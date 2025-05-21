@@ -53,6 +53,12 @@ export function initGeneration() {
         formData.append('style', styleTemplateInput.value + (styleDescription.value ? ': ' + styleDescription.value : ''));
         formData.append('api_token', apiToken.value);
         
+        // Add color palette if available
+        const colorPaletteInput = document.getElementById('color-palette-input');
+        if (colorPaletteInput && colorPaletteInput.value) {
+            formData.append('color_palette', colorPaletteInput.value);
+        }
+        
         // Add photo if uploaded
         const photoUpload = document.getElementById('photo-upload');
         if (photoUpload && photoUpload.files && photoUpload.files[0]) {
