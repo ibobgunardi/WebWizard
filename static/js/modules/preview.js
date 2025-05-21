@@ -1,5 +1,9 @@
 /**
  * Preview Module - Handles website preview and download functionality
+ * 
+ * This module provides functions to:
+ * 1. Initialize the preview iframe with the generated HTML content
+ * 2. Handle HTML and PDF download functionality
  */
 
 // Initialize preview functionality
