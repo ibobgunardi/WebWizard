@@ -11,6 +11,7 @@ import { initGeneration } from './modules/generation.js';
 import { initPhotoUpload } from './modules/photoUpload.js';
 import { initDeploy } from './modules/deploy.js';
 import { initPdfDownload } from './modules/pdfDownload.js';
+import { initTerms } from './modules/terms.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all modules
@@ -24,4 +25,5 @@ document.addEventListener('DOMContentLoaded', function() {
     initPhotoUpload();
     initDeploy();
     initPdfDownload();
+    initTerms();
 });
