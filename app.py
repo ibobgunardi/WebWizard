@@ -51,6 +51,13 @@ def generate():
         # Generate website HTML using AI
         html_content = generate_website(website_type, content, style, language, api_token, profile_image)
         
+        # Check if we got valid HTML content
+        if not html_content or len(html_content.strip()) < 50:  # Arbitrary minimum length for valid HTML
+            return jsonify({
+                'success': False,
+                'message': 'Failed to generate valid HTML content. Please try again or check your API token.'
+            }), 400
+        
         # Store the generated HTML in the session for preview
         session['generated_html'] = html_content
         

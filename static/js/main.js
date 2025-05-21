@@ -253,14 +253,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const termsCheckbox = document.getElementById('terms-checkbox');
     
     termsCheckbox.addEventListener('change', function() {
-        validateGenerateButton();
+        // We'll keep the button enabled but show validation messages when clicked
+        if (termsCheckbox.checked) {
+            termsCheckbox.classList.add('is-valid');
+            termsCheckbox.classList.remove('is-invalid');
+        } else {
+            termsCheckbox.classList.remove('is-valid');
+            termsCheckbox.classList.add('is-invalid');
+        }
     });
     
+    // Always keep the generate button enabled
     function validateGenerateButton() {
-        const tokenValid = apiToken.classList.contains('is-valid');
+        // We'll validate on click instead of disabling the button
+        const tokenValid = apiToken.value.trim() !== '';
         const termsAccepted = termsCheckbox.checked;
         
-        generateBtn.disabled = !(tokenValid && termsAccepted);
+        // Visual feedback only
+        if (tokenValid) {
+            apiToken.classList.add('is-valid');
+            apiToken.classList.remove('is-invalid');
+        } else {
+            apiToken.classList.remove('is-valid');
+            // Don't add invalid class here, we'll do it on click
+        }
+        
+        // Remove disabled attribute from generate button
+        generateBtn.disabled = false;
     }
     
     // API Token validation and toggle visibility
@@ -306,24 +325,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     generateBtn.addEventListener('click', function() {
+        // Collect validation issues
+        let missingItems = [];
+        
+        // Check API token
         if (!apiToken.value.trim()) {
-            Swal.fire({
-                title: 'API Token Required',
-                text: 'Please enter your OpenRouter API token to generate the website',
-                icon: 'warning',
-                confirmButtonColor: '#FF6B6B'
-            });
-            return;
+            apiToken.classList.add('is-invalid');
+            apiToken.classList.remove('is-valid');
+            missingItems.push("OpenRouter API token");
+        } else {
+            // Extra validation for token format
+            const token = apiToken.value.trim();
+            const tokenRegex = /^[a-zA-Z0-9_\-]{10,}/;
+            if (!tokenRegex.test(token)) {
+                apiToken.classList.add('is-invalid');
+                apiToken.classList.remove('is-valid');
+                missingItems.push("valid OpenRouter API token format");
+            } else {
+                apiToken.classList.add('is-valid');
+                apiToken.classList.remove('is-invalid');
+            }
         }
         
-        // Extra validation
-        const token = apiToken.value.trim();
-        const tokenRegex = /^[a-zA-Z0-9_\-]{10,}/;
-        if (!tokenRegex.test(token)) {
+        // Check terms acceptance
+        if (!termsCheckbox.checked) {
+            termsCheckbox.classList.add('is-invalid');
+            termsCheckbox.classList.remove('is-valid');
+            missingItems.push("terms and conditions acceptance");
+        } else {
+            termsCheckbox.classList.add('is-valid');
+            termsCheckbox.classList.remove('is-invalid');
+        }
+        
+        // Show error if validation fails
+        if (missingItems.length > 0) {
             Swal.fire({
-                title: 'Invalid API Token',
-                text: 'The API token you entered doesn\'t appear to be valid. Please check and try again.',
-                icon: 'error',
+                title: 'Cannot Generate Website',
+                text: 'Please provide the following: ' + missingItems.join(", "),
+                icon: 'warning',
                 confirmButtonColor: '#FF6B6B'
             });
             return;
@@ -352,7 +391,14 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Server error occurred');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             // Reset button state
             generateBtn.disabled = false;
@@ -410,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             Swal.fire({
                 title: 'Something Went Wrong',
-                text: 'An error occurred while generating your website. Please try again.',
+                text: error.message || 'An error occurred while generating your website. Please try again.',
                 icon: 'error',
                 confirmButtonColor: '#FF6B6B'
             });
@@ -429,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
         step1Next.disabled = true;
         step2Next.disabled = true;
         step3Next.disabled = true;
+        // Don't disable generate button
         
         // Reset preview
         previewIframe.classList.add('d-none');
