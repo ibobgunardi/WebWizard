@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import requests
+from datetime import datetime
 from langdetect import detect
 
 def detect_language(text):
@@ -83,7 +84,8 @@ def generate_website(website_type, content, style, language, api_token, color_pa
     photo_instructions = ""
     if photo_data:
         photo_instructions = """
-    11. Include the provided profile photo in an appropriate location (the base64 encoded image data will be provided separately)
+    11. Include a profile photo placeholder with the ID "profile-photo-placeholder" in an appropriate location.
+        Use this exact HTML: <img id="profile-photo-placeholder" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">
         """
     
     prompt = f"""
@@ -130,6 +132,13 @@ def generate_website(website_type, content, style, language, api_token, color_pa
         
         result = response.json()
         
+        # Log the AI response
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ai_response_path = f"/workspace/WebWizard/logs/ai_responses/response_{timestamp}.json"
+        os.makedirs(os.path.dirname(ai_response_path), exist_ok=True)
+        with open(ai_response_path, 'w') as f:
+            json.dump(result, f, indent=2)
+        
         # Check if we have choices in the response
         if 'choices' not in result or not result['choices'] or 'message' not in result['choices'][0]:
             error_msg = "API response did not contain expected data structure"
@@ -141,6 +150,12 @@ def generate_website(website_type, content, style, language, api_token, color_pa
         
         # Clean up the response if needed (remove any markdown code block markers)
         html_content = html_content.replace("```html", "").replace("```", "").strip()
+        
+        # Log the generated HTML
+        html_dump_path = f"/workspace/WebWizard/logs/html_dumps/html_{timestamp}.html"
+        os.makedirs(os.path.dirname(html_dump_path), exist_ok=True)
+        with open(html_dump_path, 'w') as f:
+            f.write(html_content)
         
         return html_content
     except requests.RequestException as req_err:

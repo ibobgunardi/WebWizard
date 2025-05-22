@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session
 from utils import generate_website, detect_language, deploy_to_vercel
 
@@ -31,13 +32,16 @@ def generate():
         language = detect_language(content)
         
         # Process photo data if provided
+        original_photo_data = None
         if photo_data:
             # Extract just the base64 part from the data URL
             if 'base64,' in photo_data:
-                photo_data = photo_data.split('base64,')[1]
+                original_photo_data = photo_data.split('base64,')[1]
+            else:
+                original_photo_data = photo_data
             
             # Add a note about the photo to the content
-            content += "\n\nPlease include the attached profile photo in the generated website. The photo is provided as a base64 encoded image."
+            content += "\n\nPlease include a profile photo in the generated website."
         
         # Generate website HTML using AI
         html_content = generate_website(
@@ -47,14 +51,20 @@ def generate():
             language=language, 
             api_token=api_token,
             color_palette=color_palette,
-            photo_data=photo_data
+            photo_data=original_photo_data is not None  # Just pass a boolean flag
         )
         
-        # If photo data was provided, ensure it's included in the HTML
-        if photo_data:
-            # Check if the AI included the base64 image
-            if 'base64' not in html_content:
-                # If not, add it ourselves in a reasonable location
+        # If photo data was provided, add it to the placeholder or insert it if no placeholder exists
+        if original_photo_data:
+            # Check if the AI included the placeholder
+            if 'id="profile-photo-placeholder"' in html_content:
+                # Replace the placeholder with the actual image
+                html_content = html_content.replace(
+                    'id="profile-photo-placeholder"', 
+                    f'id="profile-photo" src="data:image/jpeg;base64,{original_photo_data}"'
+                )
+            else:
+                # If no placeholder, add it ourselves in a reasonable location
                 # Try to find a suitable container for the photo
                 photo_containers = [
                     '<div class="profile"', 
@@ -76,7 +86,7 @@ def generate():
                             break
                 
                 # Create the image tag with appropriate styling
-                img_tag = f'<img src="data:image/jpeg;base64,{photo_data}" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">'
+                img_tag = f'<img src="data:image/jpeg;base64,{original_photo_data}" alt="Profile Photo" class="profile-photo" style="max-width: 300px; border-radius: 8px; margin: 20px auto; display: block;">'
                 
                 if insertion_point:
                     # Insert after the container opening tag
@@ -84,10 +94,10 @@ def generate():
                 elif '</body>' in html_content:
                     # Fallback: insert before closing body tag
                     html_content = html_content.replace('</body>', f'{img_tag}</body>')
-                    
-                # Add CSS for the profile photo
-                if '</style>' in html_content:
-                    photo_css = """
+            
+            # Add CSS for the profile photo if not already present
+            if '.profile-photo' not in html_content and '</style>' in html_content:
+                photo_css = """
     .profile-photo {
         max-width: 300px;
         border-radius: 8px;
@@ -100,7 +110,14 @@ def generate():
         transform: scale(1.02);
     }
 """
-                    html_content = html_content.replace('</style>', f'{photo_css}</style>')
+                html_content = html_content.replace('</style>', f'{photo_css}</style>')
+        
+        # Log the final HTML
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final_html_path = f"/workspace/WebWizard/logs/html_dumps/final_html_{timestamp}.html"
+        os.makedirs(os.path.dirname(final_html_path), exist_ok=True)
+        with open(final_html_path, 'w') as f:
+            f.write(html_content)
         
         # Store the generated HTML in the session for preview
         session['generated_html'] = html_content
