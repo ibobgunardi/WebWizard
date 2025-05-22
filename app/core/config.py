@@ -21,6 +21,17 @@ class Settings(BaseSettings):
     # Logs directory
     LOGS_DIR: str = "logs"
     
+    # Database settings
+    POSTGRES_USER: str = os.environ.get("POSTGRES_USER", "postgres")
+    POSTGRES_PASSWORD: str = os.environ.get("POSTGRES_PASSWORD", "postgres")
+    POSTGRES_SERVER: str = os.environ.get("POSTGRES_SERVER", "localhost")
+    POSTGRES_PORT: str = os.environ.get("POSTGRES_PORT", "5432")
+    POSTGRES_DB: str = os.environ.get("POSTGRES_DB", "webwizard")
+    DATABASE_URL: str = os.environ.get(
+        "DATABASE_URL",
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    )
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
